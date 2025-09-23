@@ -1,0 +1,41 @@
+name: Check Archives
+
+on:
+  schedule:
+    - cron: '0 6-17 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-archives:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests python-dotenv
+
+      - name: Download previous history
+        uses: actions/download-artifact@v4
+        with:
+          name: history-json
+          path: ./
+        continue-on-error: true
+
+      - name: Run archive check script
+        run: python check_archive.py
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+      - name: Upload updated history
+        uses: actions/upload-artifact@v4
+        with:
+          name: history-json
+          path: ./history.json
